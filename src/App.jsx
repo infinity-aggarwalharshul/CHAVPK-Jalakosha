@@ -1,4 +1,3 @@
-```react
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldCheck, Cpu, Activity, Database, MessageSquare, Play,
@@ -143,7 +142,7 @@ const Header = ({ currentView, setCurrentView, setIsMobileMenuOpen, setShowAuthM
               <Zap className="w-3 h-3" /> Data Compressed (98%)
             </span>
             <span className="w-px h-4 bg-slate-700" />
-            <span className={`flex items-center gap-1 ${securityStatus === 'OPTIMAL' ? 'text-emerald-400' : 'text-amber-500'}`}>
+                        <span className="flex items-center gap-1 text-emerald-400">
               <Network className="w-3 h-3" /> {securityStatus}
             </span>
           </div>
@@ -912,6 +911,3 @@ const Footer = ({ setCurrentView }) => (
     </div>
   </footer>
 );
-
-
-```
