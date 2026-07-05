@@ -21,23 +21,33 @@
         // PASTE YOUR ENTIRE 900+ LINES OF APP.JSX DIRECTLY BELOW THIS LINE:
 // --- MAIN FULL-STACK APPLICATION COMPONENT ---
 // --- BROWSER LUCIDE ICON COMPONENT BRIDGE ---
+// --- BROWSER LUCIDE ICON COMPONENT BRIDGE (FIXED) ---
 const lucideIcons = ['ShieldCheck', 'Cpu', 'Activity', 'Database', 'MessageSquare', 'Play', 'Settings', 'Menu', 'X', 'Lock', 'RefreshCcw', 'User', 'Zap', 'Droplet', 'CreditCard', 'Bitcoin', 'QrCode', 'Fingerprint', 'Search', 'Lightbulb', 'BookOpen', 'Printer', 'Network', 'TrendingUp', 'CheckCircle'];
 
 lucideIcons.forEach(iconName => {
     window[iconName] = (props) => {
+        // Safe check to get icons from the lucide package object
+        const lucideObj = window.lucide || (window.lucide && window.lucide.default);
         const ref = React.useRef(null);
+        
         React.useEffect(() => {
-            if (ref.current) {
+            if (ref.current && lucideObj) {
                 ref.current.innerHTML = '';
-                const iconSpec = lucide.icons[iconName.charAt(0).toLowerCase() + iconName.slice(1)] || lucide.icons.helpCircle;
-                const svgEl = lucide.createIcons.createSvg(iconSpec, {
-                    ...props,
-                    class: props.className || ''
-                });
-                ref.current.appendChild(svgEl);
+                const targetKey = iconName.charAt(0).toLowerCase() + iconName.slice(1);
+                const iconSpec = lucideObj.icons ? lucideObj.icons[targetKey] : null;
+                
+                if (iconSpec) {
+                    const svgEl = lucideObj.createIcons.createSvg(iconSpec, {
+                        ...props,
+                        class: props.className || ''
+                    });
+                    ref.current.appendChild(svgEl);
+                }
             }
-        }, [props.className, props.color, props.size]);
-        return <span ref={ref} className="inline-flex items-center justify-center" />;
+        }, [props.className]);
+        
+        // Return a structural visual layout anchor box if script loading lags
+        return <span ref={ref} className={`inline-flex items-center justify-center ${props.className || ''}`} style={{ minWidth: '1.25rem', minHeight: '1.25rem' }}>◽</span>;
     };
 });
 export default function App() {
