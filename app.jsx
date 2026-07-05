@@ -1,0 +1,917 @@
+```react
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  ShieldCheck, Cpu, Activity, Database, MessageSquare, Play,
+  Settings, Menu, X, Lock, RefreshCcw, User, Zap, Droplet,
+  CreditCard, Bitcoin, QrCode, Fingerprint, Search, Lightbulb,
+  BookOpen, Printer, Network, TrendingUp, CheckCircle
+} from 'lucide-react';
+
+// --- MAIN FULL-STACK APPLICATION COMPONENT ---
+export default function App() {
+  const [currentView, setCurrentView] = useState('home');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+ 
+  // Backend Simulation State
+  const [autoUpdateSync, setAutoUpdateSync] = useState(Date.now());
+  const [securityStatus, setSecurityStatus] = useState('OPTIMAL');
+  const [userAuth, setUserAuth] = useState(null); // Null = Guest Mode
+  const [isPremium, setIsPremium] = useState(false);
+
+  // Hidden Auto-Update, Compression & Blockchain Daemon
+  useEffect(() => {
+    const backendDaemon = setInterval(() => {
+      setAutoUpdateSync(Date.now());
+      if (Math.random() > 0.97) {
+        setSecurityStatus('BLOCKCHAIN RE-SYNC');
+        setTimeout(() => setSecurityStatus('OPTIMAL'), 2500);
+      }
+    }, 12000);
+    return () => clearInterval(backendDaemon);
+  }, []);
+
+  const renderContent = () => {
+    switch (currentView) {
+      case 'home': return <HomeView setView={setCurrentView} setShowPremiumModal={setShowPremiumModal} />;
+      case 'simulator': return <SimulatorView />;
+      case 'ideation': return <IdeationMatrixView isPremium={isPremium} setShowPremiumModal={setShowPremiumModal} />;
+      case 'blog': return <BlogView />;
+      case 'about': return <AboutView />;
+      case 'faq': return <FAQView />;
+      case 'privacy': return <PrivacyView />;
+      case 'terms': return <TermsView />;
+      default: return <HomeView setView={setCurrentView} setShowPremiumModal={setShowPremiumModal} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-cyan-50 font-sans selection:bg-cyan-500 selection:text-white overflow-x-hidden">
+      {/* Background Quantum Glowing UI */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-cyan-900/10 blur-[150px]" />
+        <div className="absolute top-[40%] -right-[10%] w-[50%] h-[70%] rounded-full bg-blue-900/10 blur-[150px]" />
+      </div>
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+          setShowAuthModal={setShowAuthModal}
+          userAuth={userAuth}
+          securityStatus={securityStatus}
+        />
+
+        {isMobileMenuOpen && (
+          <MobileMenu
+            setCurrentView={setCurrentView}
+            setIsMobileMenuOpen={setIsMobileMenuOpen}
+            setShowAuthModal={setShowAuthModal}
+          />
+        )}
+
+        <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
+          {renderContent()}
+        </main>
+
+        <Footer setCurrentView={setCurrentView} />
+       
+        {/* Floating Global Widgets */}
+        <AIAgent />
+        {showAuthModal && <AuthModal setShowAuthModal={setShowAuthModal} setUserAuth={setUserAuth} />}
+        {showPremiumModal && <PremiumModal setShowPremiumModal={setShowPremiumModal} setIsPremium={setIsPremium} />}
+      </div>
+    </div>
+  );
+}
+
+// --- GLOBAL HEADER & NAVIGATION ---
+
+const Header = ({ currentView, setCurrentView, setIsMobileMenuOpen, setShowAuthModal, userAuth, securityStatus }) => {
+  return (
+    <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-cyan-900/50 shadow-lg shadow-cyan-900/20">
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+       
+        {/* Brand Logo */}
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentView('home')}>
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 shadow-[0_0_20px_rgba(6,182,212,0.6)] group-hover:shadow-[0_0_30px_rgba(6,182,212,0.8)] transition-all">
+            <Activity className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-xl leading-tight tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+              CHAVPK Jalashoshaka
+            </span>
+            <span className="text-[9px] text-cyan-500 tracking-[0.25em] font-semibold uppercase flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3"/> Patent & Copyright Protected
+            </span>
+          </div>
+        </div>
+
+        {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center gap-6">
+          <NavLink label="Home" id="home" current={currentView} set={setCurrentView} />
+          <NavLink label="3D Simulator" id="simulator" current={currentView} set={setCurrentView} />
+          <NavLink label="Ideation Matrix" id="ideation" current={currentView} set={setCurrentView} />
+          <NavLink label="Blogs" id="blog" current={currentView} set={setCurrentView} />
+          <NavLink label="About Us" id="about" current={currentView} set={setCurrentView} />
+         
+          {userAuth ? (
+             <div className="ml-4 flex items-center gap-3 bg-cyan-950/50 border border-cyan-800 px-4 py-2 rounded-full">
+               <Fingerprint className="w-4 h-4 text-emerald-400" />
+               <span className="text-xs font-bold text-cyan-300">ID: {userAuth.virtualId}</span>
+             </div>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="ml-2 px-5 py-2 rounded-full bg-cyan-950 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-900 hover:text-white transition-all flex items-center gap-2 text-sm font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.6)]"
+            >
+              <User className="w-4 h-4" />
+              Secure Login
+            </button>
+          )}
+        </nav>
+
+        <div className="flex items-center gap-4">
+          <div className="hidden xl:flex items-center gap-3 text-[10px] uppercase font-bold border border-slate-800 bg-slate-900 rounded-full px-4 py-1.5 shadow-inner">
+            <span className="flex items-center gap-1 text-emerald-400">
+              <Database className="w-3 h-3" /> 10T SQL Active
+            </span>
+            <span className="w-px h-4 bg-slate-700" />
+            <span className="flex items-center gap-1 text-blue-400">
+              <Zap className="w-3 h-3" /> Data Compressed (98%)
+            </span>
+            <span className="w-px h-4 bg-slate-700" />
+            <span className={`flex items-center gap-1 ${securityStatus === 'OPTIMAL' ? 'text-emerald-400' : 'text-amber-500'}`}>
+              <Network className="w-3 h-3" /> {securityStatus}
+            </span>
+          </div>
+          <button className="lg:hidden text-cyan-400 p-2" onClick={() => setIsMobileMenuOpen(true)}>
+            <Menu className="w-7 h-7" />
+          </button>
+        </div>
+      </div>
+     
+      {/* Live Financial & Tech Ticker */}
+      <div className="w-full bg-slate-950/90 border-b border-cyan-900/30 overflow-hidden py-1">
+        <div className="whitespace-nowrap animate-marquee py-0.5 text-xs font-mono text-cyan-300/80 flex gap-12">
+          <span>💎 CHC (ChitraHarsha Crypto): ₹3,750.40 (+4.2%)</span>
+          <span>🔗 BLOCKCHAIN MGMT: ENCRYPTED & ACTIVE</span>
+          <span>₿ BTC: $62,104.00 (-0.8%)</span>
+          <span>₹ INR/USD: 83.12</span>
+          <span>🟢 DARK WEB SCAN: NO THREATS</span>
+          <span>🧠 NLP LIVE MATRIX: ONLINE</span>
+          <span>⚡ AUTO-UPDATE: SEAMLESS</span>
+          <span>💎 CHC: ₹3,750.40 (+4.2%)</span>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+const NavLink = ({ label, id, current, set }) => (
+  <button
+    onClick={() => set(id)}
+    className={`text-sm font-bold tracking-wide transition-colors duration-300 hover:text-cyan-300 ${
+      current === id ? 'text-cyan-400 border-b-2 border-cyan-400 pb-1' : 'text-slate-400'
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const MobileMenu = ({ setCurrentView, setIsMobileMenuOpen, setShowAuthModal }) => (
+  <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col p-6 pt-24 animate-fade-in">
+    <button className="absolute top-6 right-6 text-cyan-500 p-2" onClick={() => setIsMobileMenuOpen(false)}>
+      <X className="w-8 h-8" />
+    </button>
+    <div className="flex flex-col gap-6 text-xl font-bold">
+      {['home', 'simulator', 'ideation', 'blog', 'about', 'faq'].map((view) => (
+        <button
+          key={view}
+          className="text-left capitalize text-cyan-100 hover:text-cyan-400 transition-colors"
+          onClick={() => { setCurrentView(view); setIsMobileMenuOpen(false); }}
+        >
+          {view === 'home' ? 'Dashboard' : view === 'ideation' ? 'Ideation Matrix' : view}
+        </button>
+      ))}
+      <div className="h-px w-full bg-cyan-900/50 my-2" />
+      <button
+        className="text-left text-cyan-400 flex items-center gap-3"
+        onClick={() => { setShowAuthModal(true); setIsMobileMenuOpen(false); }}
+      >
+        <Lock className="w-6 h-6" /> Secure Cloud Login
+      </button>
+    </div>
+  </div>
+);
+
+// --- DASHBOARD / HOME VIEW ---
+
+const HomeView = ({ setView, setShowPremiumModal }) => {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[75vh] text-center animate-fade-in">
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-900/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold mb-8 tracking-widest uppercase shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+        <Database className="w-3.5 h-3.5" /> 10-Trillion SQL Support | Global Ready
+      </div>
+     
+      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-cyan-100 to-cyan-600 leading-tight">
+        Revolutionizing Global <br/> Ecosystem Resilience
+      </h1>
+     
+      <p className="text-slate-400 max-w-3xl mx-auto mb-10 text-lg md:text-xl leading-relaxed font-light">
+        CHAVPK Jalashoshaka deploys advanced <strong className="text-cyan-300 font-bold">3D-Printed Shape-Memory Polymers</strong> via state-of-the-art AI infrastructure. Eliminate vector-borne disease and convert stagnant waste into harvestable biomass energy globally.
+      </p>
+
+      <div className="flex flex-col sm:flex-row gap-6 items-center justify-center w-full">
+        <button
+          onClick={() => setView('simulator')}
+          className="group relative px-10 py-5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all overflow-hidden flex items-center gap-3 w-full sm:w-auto justify-center"
+        >
+          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+          <Play className="w-6 h-6 relative z-10" />
+          <span className="relative z-10">Launch 3D Simulator</span>
+        </button>
+       
+        <button
+          onClick={() => setShowPremiumModal(true)}
+          className="px-10 py-5 bg-slate-900 hover:bg-slate-800 border border-cyan-800 hover:border-amber-500 text-cyan-300 rounded-xl font-bold text-lg transition-all flex items-center gap-3 w-full sm:w-auto justify-center shadow-lg"
+        >
+          <CreditCard className="w-6 h-6 text-amber-500" />
+          Upgrade to Premium Tier
+        </button>
+      </div>
+
+      <div className="mt-20 grid grid-cols-1 md:grid-cols-4 gap-6 w-full text-left">
+        <FeatureCard icon={<Printer />} title="3D Printed Polymers" desc="Rapid on-site manufacturing of shape-memory matrix plates." />
+        <FeatureCard icon={<Zap />} title="Energy Coagulation" desc="Converts liquid stagnation into dry, harvestable biomass bio-bricks." />
+        <FeatureCard icon={<ShieldCheck />} title="Blockchain Security" desc="Data is highly compressed, encrypted, and distributed globally." />
+        <FeatureCard icon={<Lightbulb />} title="Ideation Matrix" desc="10-Trillion SQL queries validate your ideas for global novelty." />
+      </div>
+    </div>
+  );
+};
+
+const FeatureCard = ({ icon, title, desc }) => (
+  <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/50 hover:bg-slate-900/80 transition-all duration-300 group">
+    <div className="w-10 h-10 rounded-xl bg-cyan-950 text-cyan-400 flex items-center justify-center mb-4 border border-cyan-800 group-hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all">
+      {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    </div>
+    <h3 className="text-lg font-bold text-slate-100 mb-2">{title}</h3>
+    <p className="text-sm text-slate-400 leading-relaxed font-medium">{desc}</p>
+  </div>
+);
+
+// --- IDEATION & PATENT MATRIX (Google Scholar Alternative) ---
+
+const IdeationMatrixView = ({ isPremium, setShowPremiumModal }) => {
+  const [query, setQuery] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleSearch = () => {
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
+    if (!query) return;
+   
+    setIsAnalyzing(true);
+    // Simulate 10-Trillion SQL Query Search
+    setTimeout(() => {
+      setIsAnalyzing(false);
+      setResult({
+        noveltyScore: Math.floor(Math.random() * 20) + 80, // 80-99%
+        impact: 'Transformational (Global Scale)',
+        patentability: 'High - Eligible for Utility Patent',
+        similarTech: Math.floor(Math.random() * 50) + 10,
+        verdict: "Idea exhibits strong novelty. Recommendation: Proceed with 3D prototyping and secure intellectual property rights immediately via CHAVPK Legal."
+      });
+    }, 2500);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto animate-fade-in">
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-900/30 border border-amber-500/50 text-amber-400 rounded-full text-xs font-bold mb-4">
+          <Lock className="w-3 h-3" /> Premium Feature
+        </div>
+        <h2 className="text-4xl font-extrabold text-cyan-400 mb-4 tracking-tight">Ideation & Patent Matrix</h2>
+        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          Utilizing our 10-Trillion SQL Database (equivalent to global scholarly archives), we analyze your concepts for true novelty, global transformational impact, and patentability.
+        </p>
+      </div>
+
+      <div className="bg-slate-900/60 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="relative flex-grow">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500 w-6 h-6" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Describe your innovative idea or technology here..."
+              className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl py-4 pl-14 pr-4 text-white text-lg focus:border-cyan-500 outline-none transition-all placeholder:text-slate-600"
+            />
+          </div>
+          <button
+            onClick={handleSearch}
+            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+          >
+            {isAnalyzing ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Lightbulb className="w-5 h-5" />}
+            Analyze Concept
+          </button>
+        </div>
+
+        {isAnalyzing && (
+          <div className="text-center py-12">
+            <Database className="w-16 h-16 text-cyan-500 animate-pulse mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">Executing 10-Trillion SQL Query Matrix...</h3>
+            <p className="text-cyan-400 font-mono text-sm">Scanning global patents, scholarly articles, and dark web repositories...</p>
+          </div>
+        )}
+
+        {result && !isAnalyzing && (
+          <div className="bg-slate-950 border border-emerald-500/50 rounded-xl p-6 md:p-8 animate-fade-in relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+              <CheckCircle className="w-8 h-8 text-emerald-500" /> Analysis Complete
+            </h3>
+           
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-slate-900 border border-slate-700 p-4 rounded-lg">
+                <p className="text-slate-400 text-xs font-bold uppercase mb-1">Novelty Score</p>
+                <p className="text-3xl font-extrabold text-cyan-400">{result.noveltyScore}%</p>
+              </div>
+              <div className="bg-slate-900 border border-slate-700 p-4 rounded-lg">
+                <p className="text-slate-400 text-xs font-bold uppercase mb-1">Patentability</p>
+                <p className="text-xl font-bold text-emerald-400">{result.patentability}</p>
+              </div>
+              <div className="bg-slate-900 border border-slate-700 p-4 rounded-lg">
+                <p className="text-slate-400 text-xs font-bold uppercase mb-1">Global Impact Prediction</p>
+                <p className="text-xl font-bold text-white">{result.impact}</p>
+              </div>
+              <div className="bg-slate-900 border border-slate-700 p-4 rounded-lg">
+                <p className="text-slate-400 text-xs font-bold uppercase mb-1">Similar Pre-existing Tech Nodes</p>
+                <p className="text-xl font-bold text-amber-400">{result.similarTech} Found Globally</p>
+              </div>
+            </div>
+
+            <div className="bg-blue-900/20 border border-blue-500/30 p-5 rounded-lg">
+              <p className="text-blue-100 font-medium leading-relaxed">
+                <strong className="text-blue-400">AI Verdict:</strong> {result.verdict}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- SEO OPTIMIZED BLOG SECTION ---
+
+const BlogView = () => (
+  <div className="max-w-4xl mx-auto animate-fade-in">
+    <div className="mb-10 text-center">
+      <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 rounded-full text-[10px] font-bold mb-4 uppercase tracking-widest">
+        SEO Rank #1 | 1500+ Words Masterclass
+      </div>
+      <h1 className="text-4xl md:text-5xl font-extrabold text-cyan-400 mb-6 leading-tight">
+        Revolutionizing Global Ecosystems: The 3D-Printed Shape-Memory Polymer Matrix
+      </h1>
+      <div className="flex items-center justify-center gap-4 text-sm text-slate-400">
+        <span className="flex items-center gap-1"><User className="w-4 h-4"/> CHAVPK Brainstormers Dept</span>
+        <span className="flex items-center gap-1"><BookOpen className="w-4 h-4"/> 12 Min Read</span>
+      </div>
+    </div>
+
+    <div className="prose prose-invert prose-cyan max-w-none text-lg text-slate-300 space-y-8">
+      {/* Introduction */}
+      <p className="leading-relaxed text-xl text-slate-200 font-medium border-l-4 border-cyan-500 pl-6">
+        In an era defined by rapid climate shifts and the urgent need for sustainable infrastructure, the CHAVPK Jalashoshaka emerges not just as a tool, but as a paradigm shift. Utilizing state-of-the-art Natural Language Processing (NLP) paired with a robust Google Cloud Database handling up to 10-Trillion SQL queries, our platform is redefining how we interact with ecological hazards.
+      </p>
+
+      <p className="leading-relaxed">
+        The core of this innovation lies within the physical manifestation of our digital AI models: <strong>3D-Printed Shape-Memory Polymers</strong>. These polymers are engineered at the molecular level to respond to specific environmental triggers—namely, stagnant water pools that act as primary breeding grounds for vector-borne diseases like malaria and dengue. By leveraging advanced material science and 3D printing technology, we can rapidly deploy these solutions on a global scale.
+      </p>
+
+      {/* Simulated Realistic Image 1 */}
+      <div className="my-12 p-1 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.3)]">
+        <div className="bg-slate-900 rounded-xl p-8 flex flex-col items-center justify-center min-h-[300px] overflow-hidden relative">
+          {/* Abstract SVG Graphic representing 3D printing / Polymer structure */}
+          <svg viewBox="0 0 200 200" className="w-48 h-48 opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100 20L170 60V140L100 180L30 140V60L100 20Z" stroke="url(#paint0_linear)" strokeWidth="4"/>
+            <path d="M100 20V100M170 60L100 100M30 60L100 100M100 180V100M170 140L100 100M30 140L100 100" stroke="url(#paint1_linear)" strokeWidth="2" strokeDasharray="5 5"/>
+            <circle cx="100" cy="100" r="10" fill="#06B6D4"/>
+            <defs>
+              <linearGradient id="paint0_linear" x1="30" y1="20" x2="170" y2="180" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#06B6D4" />
+                <stop offset="1" stopColor="#3B82F6" />
+              </linearGradient>
+              <linearGradient id="paint1_linear" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#3B82F6" />
+                <stop offset="1" stopColor="#8B5CF6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <p className="mt-6 text-sm text-cyan-300 font-mono text-center">Fig 1. Schematic generation of Shape-Memory Polymer lattice via 3D Micro-extrusion.</p>
+        </div>
+      </div>
+
+      <h3 className="text-2xl font-bold text-white mt-12 mb-4">The Convergence of AI and Physical Mechanics</h3>
+     
+      <p className="leading-relaxed">
+        Our proprietary software ecosystem is not merely a monitoring tool; it is a dynamic, auto-updating neural network. The platform features an ultra-lightweight architecture achieved through quantum-level data compression. This allows the application to remain lightning fast and incredibly powerful, ensuring that real-time telemetry from deployed Jalashoshaka units is processed instantaneously.
+      </p>
+
+      <p className="leading-relaxed">
+        When a unit is deployed, the 3D-printed core expands aggressively upon breaking the surface tension of the water. Depending on the programmed mode, it initiates one of two protocols:
+        <ul className="list-disc pl-8 mt-4 space-y-2 text-slate-300">
+          <li><strong>Capillary Earth Drainage:</strong> Micro-tubules draw the water downward, bypassing compacted topsoil and hydrating deeper root systems.</li>
+          <li><strong>Exothermic Solidification:</strong> Embedded phase-change materials react with the water, coagulating the liquid waste into a solid, dry bio-brick that can be harvested for biomass energy generation.</li>
+        </ul>
+      </p>
+
+      {/* Simulated Realistic Image 2 */}
+      <div className="my-12 p-1 bg-slate-800 rounded-2xl border border-slate-700">
+        <div className="bg-slate-950 rounded-xl p-8 flex flex-col items-center justify-center min-h-[250px]">
+          <div className="flex items-center gap-8">
+             <Database className="w-16 h-16 text-slate-600" />
+             <div className="flex flex-col gap-2">
+                <div className="w-24 h-1 bg-cyan-500 animate-pulse rounded-full" />
+                <div className="w-16 h-1 bg-cyan-500 animate-pulse rounded-full" style={{animationDelay: '200ms'}} />
+                <div className="w-20 h-1 bg-cyan-500 animate-pulse rounded-full" style={{animationDelay: '400ms'}} />
+             </div>
+             <Cpu className="w-20 h-20 text-cyan-400" />
+          </div>
+          <p className="mt-8 text-sm text-slate-400 font-mono text-center">Fig 2. NLP Data pipeline streaming telemetry into the 10-Trillion SQL Engine.</p>
+        </div>
+      </div>
+
+      <h3 className="text-2xl font-bold text-white mt-12 mb-4">Blockchain Security and Commercial Readiness</h3>
+     
+      <p className="leading-relaxed">
+        Security remains paramount. The CHAVPK Jalashoshaka operates on a decentralized Blockchain Management System. Every user registration, Virtual ID card scan, and financial transaction (via The ChitraHarsha VPK Pay or CHC Cryptocurrency) is irreversibly logged and encrypted. Coupled with 24/7 Dark Web monitoring and anti-phishing algorithms, the platform sets a new global standard for enterprise security.
+      </p>
+     
+      <p className="leading-relaxed">
+        Protected by international trademarks and utility patents, the Jalashoshaka system represents a highly novel, globally scalable solution ready for widespread commercial deployment. From the Ideation Matrix validating new concepts to the automated HR systems managing our 330-person workforce, this ecosystem is the definition of future-ready technology.
+      </p>
+    </div>
+  </div>
+);
+
+
+// --- 3D JALASHOSHAKA SIMULATOR ---
+const SimulatorView = () => {
+  const canvasRef = useRef(null);
+  const [mode, setMode] = useState('drain');
+  const [simState, setSimState] = useState('idle');
+ 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let puddleRadius = 150;
+    let spiralRadius = 10;
+    let spiralRot = 0;
+    let processingProgress = 0;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      // Draw Grid
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < canvas.width; i += 50) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+      }
+
+      if (simState === 'idle') {
+        puddleRadius = 150; spiralRadius = 10; processingProgress = 0;
+      }
+
+      // Draw Water/Energy Block
+      if (mode === 'energy' && simState === 'complete') {
+        ctx.fillStyle = '#f59e0b';
+        ctx.shadowBlur = 30; ctx.shadowColor = '#d97706';
+        ctx.fillRect(cx - 100, cy - 100, 200, 200);
+        ctx.shadowBlur = 0;
+      } else {
+        const color = mode === 'drain' ? `rgba(14, 165, 233, ${Math.max(0.1, puddleRadius/150)})` : `rgba(14, 165, 233, 0.4)`;
+        ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, puddleRadius), 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, puddleRadius * 0.8), 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(56, 189, 248, ${Math.max(0, puddleRadius/150)})`;
+        ctx.lineWidth = 3; ctx.stroke();
+      }
+
+      // Draw 3D Printed Shape-Memory Spiral
+      if (simState !== 'idle') {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(spiralRot);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        // Simulate 3D printed ridged texture via dashed line
+        ctx.setLineDash([5, 5]);
+        for (let i = 0; i < 250; i++) {
+          const angle = 0.1 * i;
+          const x = (spiralRadius / 25) * angle * Math.cos(angle);
+          const y = (spiralRadius / 25) * angle * Math.sin(angle);
+          ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = mode === 'drain' ? '#10b981' : '#f59e0b';
+        ctx.lineWidth = 6;
+        ctx.shadowBlur = 20; ctx.shadowColor = ctx.strokeStyle;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Physics State Logic
+      if (simState === 'expanding') {
+        spiralRadius += 2.5; spiralRot += 0.08;
+        if (spiralRadius > 150) setSimState('processing');
+      } else if (simState === 'processing') {
+        spiralRot += 0.03; processingProgress += 0.01;
+        if (mode === 'drain') {
+          puddleRadius -= 1.2;
+          if (puddleRadius <= 0) setSimState('complete');
+        } else {
+          if (processingProgress >= 1) setSimState('complete');
+        }
+      }
+      animationFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [simState, mode]);
+
+  return (
+    <div className="flex flex-col items-center animate-fade-in max-w-5xl mx-auto">
+      <div className="text-center mb-10">
+        <h2 className="text-4xl font-extrabold text-cyan-400 mb-4 tracking-tight">3D Polymer Execution Simulator</h2>
+        <p className="text-slate-400 text-lg">Real-world physics modeling of the 3D-printed shape-memory deployment.</p>
+      </div>
+
+      <div className="w-full bg-slate-900 border-2 border-slate-700 rounded-2xl overflow-hidden relative shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+        <canvas ref={canvasRef} width={1000} height={500} className="w-full h-auto bg-[#020617] block" />
+        <div className="absolute top-6 left-6 flex flex-col gap-3 pointer-events-none">
+          <div className="bg-slate-950/90 border border-cyan-800 px-4 py-2 rounded-md text-sm text-cyan-400 font-mono flex items-center gap-2 shadow-lg">
+            <Settings className="w-4 h-4 animate-spin text-cyan-300" /> STATUS: {simState.toUpperCase()}
+          </div>
+          <div className="bg-slate-950/90 border border-slate-700 px-4 py-2 rounded-md text-sm text-slate-300 font-mono shadow-lg">
+            MATERIAL: 3D-Printed Shape-Memory Polymer
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-center gap-6 mt-10 bg-slate-900/60 p-8 rounded-2xl border border-slate-800 w-full shadow-inner">
+        <div className="flex items-center gap-2 mr-auto bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+          <button
+            onClick={() => { setMode('drain'); setSimState('idle'); }}
+            className={`px-6 py-3 rounded-md text-sm font-bold transition-all ${mode === 'drain' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+          >
+            Drain Mode
+          </button>
+          <button
+            onClick={() => { setMode('energy'); setSimState('idle'); }}
+            className={`px-6 py-3 rounded-md text-sm font-bold transition-all ${mode === 'energy' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+          >
+            Energy Bio-Brick
+          </button>
+        </div>
+
+        <button
+          onClick={() => setSimState('expanding')} disabled={simState !== 'idle'}
+          className="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-extrabold rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.6)] flex items-center gap-3 transition-all"
+        >
+          <Play className="w-5 h-5" /> Deploy Polymer Matrix
+        </button>
+       
+        <button
+          onClick={() => setSimState('idle')}
+          className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg border border-slate-600 flex items-center gap-3 transition-all"
+        >
+          <RefreshCcw className="w-5 h-5" /> Hard Reset
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// --- DATA / TEXT SECTIONS (HEAVILY SPACED FOR READABILITY) ---
+
+const AboutView = () => (
+  <div className="max-w-4xl mx-auto prose prose-invert prose-cyan animate-fade-in text-lg text-slate-300">
+    <h2 className="text-4xl font-extrabold text-cyan-400 mb-10 border-b border-cyan-900/50 pb-6">About CHAVPK Jalashoshaka</h2>
+   
+    <div className="space-y-10">
+      <p className="leading-relaxed">
+        The CHAVPK Ventures Pvt Ltd is a pioneering enterprise focused on AI-driven innovations rooted in the ancient wisdom of Sanskrit scripts ("Jalashoshaka", translating to water absorber). We bridge the gap between high-level digital technology—such as Natural Language Processing (NLP), Google Cloud Databases, and 10-trillion SQL query processing capabilities—with tangible, real-world physical engineering to solve global ecological issues.
+      </p>
+
+      <p className="leading-relaxed">
+        Our flagship physical prototype utilizes advanced <strong>3D-printed shape-memory polymers</strong> to instantly eliminate stagnant water. This mechanism aggressively eradicates vector-borne disease breeding grounds while offering a secondary, highly profitable function: solidifying the wastewater into actionable bio-energy bricks.
+      </p>
+     
+      <p className="leading-relaxed">
+        We are supported by a rigorous 330-person organizational hierarchy spanning Brainstormers, Data Scientists, HR, Finance, and Operations, operating seamlessly across a $27.12 Crore annual budget. The CHAVPK ecosystem operates on a highly secure Blockchain Management System. We are proudly <span className="text-cyan-400 font-bold">Made in India</span> and fully compliant with global data protection and continuous dark web threat-monitoring standards.
+      </p>
+    </div>
+  </div>
+);
+
+const FAQView = () => (
+  <div className="max-w-4xl mx-auto animate-fade-in">
+    <h2 className="text-4xl font-extrabold text-cyan-400 mb-12 text-center">Frequently Asked Questions</h2>
+    <div className="space-y-8">
+      <FAQItem
+        q="How does the Jalashoshaka plate actually work?"
+        a="It utilizes a proprietary 3D-printed shape-memory polymer matrix. When thrown into stagnant water, the temperature/moisture shift triggers it to spring open. It can either use capillary micro-structures to drain the water deep into the earth, or release an exothermic compound to rapidly turn the water into a solid, harvestable energy block."
+      />
+      <FAQItem
+        q="Is my registration and biometric data safe in the Cloud Database?"
+        a="Absolutely. The CHAVPK uses localized Google Cloud Infrastructure fortified with a decentralized Blockchain Management System, Passkey OTP protocols, and continuous dark web and malware monitoring. Quantum-level encryption algorithms and high-level data compression keep your data both secure and lightning fast."
+      />
+      <FAQItem
+        q="What is the Ideation Matrix feature?"
+        a="Available to premium users, the Ideation Matrix acts similarly to Google Scholar but focuses exclusively on innovation novelty. It queries our 10-Trillion SQL database to determine if your idea is novel, patentable, and capable of generating global impact."
+      />
+      <FAQItem
+        q="What is CHC (ChitraHarsha Cryptocurrency)?"
+        a="CHC is our native, blockchain-verified digital token. It is used in our Freemium model subscriptions and for international corporate transactions exclusively within 'The ChitraHarsha VPK Pay' gateway system."
+      />
+    </div>
+  </div>
+);
+
+const FAQItem = ({ q, a }) => (
+  <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-lg">
+    <h4 className="text-xl font-bold text-cyan-300 mb-4 flex items-start gap-4">
+      <span className="text-cyan-600 mt-1 bg-cyan-950 p-1.5 rounded"><MessageSquare className="w-5 h-5" /></span> {q}
+    </h4>
+    <p className="text-slate-400 pl-14 leading-relaxed text-lg">{a}</p>
+  </div>
+);
+
+const PrivacyView = () => (
+  <div className="max-w-4xl mx-auto prose prose-invert prose-cyan animate-fade-in text-lg text-slate-300">
+    <h2 className="text-4xl font-extrabold text-cyan-400 mb-10 border-b border-cyan-900/50 pb-6">Privacy Policy & Blockchain Security</h2>
+   
+    <div className="space-y-10">
+      <p className="leading-relaxed">
+        At CHAVPK Jalashoshaka, data encryption is strictly enforced. User biometric scans, virtual IDs, and passkey data are heavily compressed to maintain lightning-fast application speeds, and stored on isolated, decentralized blockchain nodes operating entirely within Indian Government compliant cloud infrastructure.
+      </p>
+
+      <p className="leading-relaxed">
+        Our autonomous security AI conducts continuous dark web monitoring algorithms, instantly cross-referencing incoming data hashes against known global dark web databases. If a phishing or malware breach attempt is detected anywhere globally, our networks auto-update immediately to dynamically isolate the threat, protecting all active sessions.
+      </p>
+     
+      <p className="leading-relaxed">
+        The integration of Google BigQuery allows us to execute 10-trillion SQL queries per second to validate user credentials without retaining plain-text logs, ensuring absolute privacy compliance.
+      </p>
+    </div>
+  </div>
+);
+
+const TermsView = () => (
+  <div className="max-w-4xl mx-auto prose prose-invert prose-cyan animate-fade-in text-lg text-slate-300">
+    <h2 className="text-4xl font-extrabold text-cyan-400 mb-10 border-b border-cyan-900/50 pb-6">Copyrights, Patents & Terms of Use</h2>
+   
+    <div className="space-y-10">
+      <p className="leading-relaxed">
+        The CHAVPK Jalashoshaka algorithms, 3D printing methodologies, and shape-memory polymer structures are strictly protected by international trademarks, utility patents, and intellectual property laws. By utilizing our services, you explicitly agree to operate within the legal frameworks of your local jurisdiction and the mandates set by the Government of India.
+      </p>
+
+      <p className="leading-relaxed">
+        The Freemium subscription model requires mandatory and automated KYC (Know Your Customer) execution using Aadhaar or PAN card verification protocols. Unauthorized duplication, reverse engineering of the shape-memory models, or bypassing the hidden auto-update mechanism is strictly prohibited and heavily monitored.
+      </p>
+     
+      <p className="leading-relaxed">
+        For all internal employees across the 330 roles (including Brainstormers, Researchers, Data Scientists), access is granted strictly through Virtual Admin ID cards and OTP biometric scans. Note that The ChitraHarsha Cryptocurrency (CHC) markets are subject to high volatility and operate under separate blockchain governance.
+      </p>
+    </div>
+  </div>
+);
+
+// --- MODALS (AUTH & PREMIUM) ---
+
+const AuthModal = ({ setShowAuthModal, setUserAuth }) => {
+  const [step, setStep] = useState(1);
+  const [department, setDepartment] = useState('');
+
+  const finishLogin = () => {
+    setUserAuth({ virtualId: 'CHV-' + Math.floor(Math.random() * 90000 + 10000), role: department || 'New User' });
+    setShowAuthModal(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-cyan-800 w-full max-w-lg rounded-3xl shadow-[0_0_60px_rgba(6,182,212,0.2)] overflow-hidden animate-fade-in">
+       
+        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+          <h3 className="text-xl font-bold text-cyan-400 flex items-center gap-3">
+            <Lock className="w-6 h-6" /> Secured Cloud Portal
+          </h3>
+          <button onClick={() => setShowAuthModal(false)} className="text-slate-500 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-8">
+          {step === 1 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm text-slate-400 mb-2 font-bold tracking-wider">USERNAME / EMAIL</label>
+                <input type="text" className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-cyan-500 outline-none transition-colors" placeholder="Enter ID..." />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-2 font-bold tracking-wider">PASSKEY (AUTHENTICATOR)</label>
+                <input type="password" className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-cyan-500 outline-none transition-colors" placeholder="••••••••" />
+              </div>
+              <button onClick={() => setStep(2)} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold py-4 rounded-xl mt-4 shadow-lg transition-all text-lg tracking-wide">
+                Initiate Quantum OTP Verification
+              </button>
+              <div className="text-center mt-6">
+                <span className="text-slate-500">New Employee / Job Role? </span>
+                <button onClick={() => setStep(3)} className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline">Register Virtual ID</button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="text-center py-10 space-y-6">
+              <ShieldCheck className="w-20 h-20 text-emerald-500 mx-auto animate-pulse" />
+              <h4 className="text-2xl font-bold text-white">Verification Sent</h4>
+              <p className="text-slate-400">OTP dispatched to Special Gmail / CHAVPK Authenticator.</p>
+              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden mt-6">
+                <div className="h-full bg-emerald-500 w-1/2 animate-marquee" />
+              </div>
+              <button onClick={finishLogin} className="mt-8 text-cyan-400 hover:underline">Simulate OTP Success</button>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6">
+              <h4 className="text-xl font-bold text-cyan-400 mb-2">Job Role Registration Matrix</h4>
+              <p className="text-sm text-slate-400 mb-6">Select from the 330-employee roster structure.</p>
+             
+              <select
+                value={department} onChange={(e) => setDepartment(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-cyan-500 outline-none"
+              >
+                <option value="">-- Select Organizational Role --</option>
+                <option value="HR Dept (39 Roles)">HR Dept (13 Junior, 13 Senior, 13 Head)</option>
+                <option value="Finance Dept (39 Roles)">Finance Dept (13 Junior, 13 Senior, 13 Head)</option>
+                <option value="CEO Dept (3 Roles)">CEO Department (3 Head Roles)</option>
+                <option value="Brainstormers Dept (39 Roles)">Brainstormers Dept (39 Roles)</option>
+                <option value="Data Analyst Dept (39 Roles)">Data Analyst Dept (39 Roles)</option>
+                <option value="Data Scientist Dept (39 Roles)">Data Scientist Dept (39 Roles)</option>
+                <option value="Research & Development (39 Roles)">Research & Development (39 Roles)</option>
+                <option value="Shareholders Dept (13 Roles)">Shareholders Dept (13 Head Roles)</option>
+                <option value="Meeting Rooms (13 Roles)">Meeting Rooms Dept (13 Roles)</option>
+                <option value="CCTV Monitoring (5 Roles)">CCTV Monitoring Dept (5 Roles)</option>
+                <option value="Interior Designers (13 Roles)">Interior Designers (13 Roles)</option>
+                <option value="Transportation (13 Roles)">Transportation Dept (13 Roles)</option>
+                <option value="Emergency Conditions (13 Roles)">Emergency Conditions (13 Roles)</option>
+                <option value="Cleaning Staff (20 Roles)">Cleaning Staff / Facilities (20 Roles)</option>
+              </select>
+             
+              <input type="text" className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none mt-2" placeholder="ID Proof (Aadhaar / PAN Number)" />
+             
+              <button onClick={finishLogin} className="w-full bg-blue-700 hover:bg-blue-600 border border-blue-500 text-white font-extrabold py-4 rounded-xl mt-6 shadow-lg transition-all text-lg">
+                Generate Virtual ID Card
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PremiumModal = ({ setShowPremiumModal, setIsPremium }) => {
+  const handleUpgrade = () => {
+    setIsPremium(true);
+    setShowPremiumModal(false);
+  }
+
+  return (
+    <div className="fixed inset-0 z-[110] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-slate-900 border-2 border-amber-600 w-full max-w-2xl rounded-3xl shadow-[0_0_80px_rgba(245,158,11,0.2)] overflow-hidden animate-fade-in flex flex-col">
+        <div className="bg-gradient-to-r from-amber-900 to-slate-900 p-8 text-center relative border-b border-amber-900">
+          <button onClick={() => setShowPremiumModal(false)} className="absolute top-6 right-6 text-amber-300 hover:text-white bg-black/20 p-2 rounded-full transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+          <CreditCard className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+          <h2 className="text-3xl font-extrabold text-white mb-2">Unlock Freemium Tier</h2>
+          <p className="text-amber-200">Gain access to the Ideation Matrix and advanced Jalashoshaka APIs.</p>
+        </div>
+       
+        <div className="p-8 flex flex-col md:flex-row gap-6">
+          {/* UPI Option */}
+          <div className="flex-1 bg-slate-950 border border-slate-700 rounded-2xl p-6 hover:border-blue-500 transition-all cursor-pointer group">
+            <QrCode className="w-12 h-12 text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
+            <h4 className="text-xl font-bold text-white mb-2">The ChitraHarsha VPK Pay</h4>
+            <p className="text-sm text-slate-400 mb-6">Official Business UPI Gateway. Instant INR settlement with secure encryption.</p>
+            <button onClick={handleUpgrade} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg font-bold">Pay via UPI</button>
+          </div>
+
+          {/* Crypto Option */}
+          <div className="flex-1 bg-slate-950 border border-slate-700 rounded-2xl p-6 hover:border-amber-500 transition-all cursor-pointer group">
+            <Bitcoin className="w-12 h-12 text-amber-400 mb-4 group-hover:scale-110 transition-transform" />
+            <h4 className="text-xl font-bold text-white mb-2">CHC Crypto Network</h4>
+            <p className="text-sm text-slate-400 mb-6">Secure blockchain transaction using ChitraHarsha Cryptocurrency.</p>
+            <button onClick={handleUpgrade} className="w-full bg-amber-600 hover:bg-amber-500 text-white py-3 rounded-lg font-bold">Transfer CHC</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- GEMINI LIVE NLP SIMULATION ---
+
+const AIAgent = () => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="fixed bottom-8 right-8 z-50">
+      {open ? (
+        <div className="bg-slate-900 border border-cyan-500/70 rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.3)] w-80 md:w-96 overflow-hidden animate-fade-in flex flex-col">
+          <div className="bg-cyan-950 px-5 py-4 border-b border-cyan-900 flex justify-between items-center">
+            <span className="font-bold text-cyan-300 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-cyan-400 animate-pulse" /> Gemini Live NLP Matrix
+            </span>
+            <button onClick={() => setOpen(false)} className="text-cyan-600 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+          </div>
+          <div className="h-72 p-5 flex flex-col gap-4 overflow-y-auto bg-[#020617] text-sm">
+            <div className="bg-slate-800 p-3 rounded-xl rounded-tl-none self-start max-w-[85%] text-slate-200 border border-slate-700 shadow-sm">
+              Initializing AI/ML NLP matrix... Multi-language transcript features active.
+              <br/><br/>
+              How can I assist you in modeling the Jalashoshaka problem-solving protocols today?
+            </div>
+            {/* Simulated Live Audio wave */}
+            <div className="flex items-center gap-1 mt-2">
+              <div className="w-1 h-3 bg-cyan-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}/>
+              <div className="w-1 h-5 bg-cyan-500 rounded-full animate-bounce" style={{animationDelay: '100ms'}}/>
+              <div className="w-1 h-2 bg-cyan-500 rounded-full animate-bounce" style={{animationDelay: '200ms'}}/>
+              <span className="text-xs text-cyan-600 ml-2 font-mono">Listening...</span>
+            </div>
+          </div>
+          <div className="p-4 border-t border-slate-800 bg-slate-900">
+            <input
+              type="text"
+              placeholder="Type query or speak..."
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white outline-none focus:border-cyan-500"
+            />
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white flex items-center justify-center shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all hover:scale-110 group border-2 border-cyan-400"
+        >
+          <MessageSquare className="w-7 h-7 group-hover:animate-bounce" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+// --- GLOBAL FOOTER ---
+
+const Footer = ({ setCurrentView }) => (
+  <footer className="border-t border-slate-800 bg-slate-950 py-12 mt-16 relative z-10">
+    <div className="container mx-auto px-4 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-10">
+     
+      <div className="text-sm text-slate-500">
+        <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+          <ShieldCheck className="w-5 h-5 text-emerald-500" />
+          <p className="font-extrabold text-slate-300 text-lg">CHAVPK Jalashoshaka</p>
+        </div>
+        <p>© 2026 All Rights Reserved. Trademarks & Copyrights Registered Globally.</p>
+        <p className="mt-3 text-cyan-600 font-mono font-bold tracking-widest uppercase">Made In India 🇮🇳</p>
+      </div>
+
+      <div className="flex flex-wrap justify-center md:justify-end gap-x-8 gap-y-4 text-sm font-bold text-slate-400">
+        <button onClick={() => setCurrentView('blog')} className="hover:text-cyan-400 transition-colors">SEO Blog</button>
+        <button onClick={() => setCurrentView('faq')} className="hover:text-cyan-400 transition-colors">FAQs</button>
+        <button onClick={() => setCurrentView('privacy')} className="hover:text-cyan-400 transition-colors">Privacy & Blockchain Security</button>
+        <button onClick={() => setCurrentView('terms')} className="hover:text-cyan-400 transition-colors">Patents & Terms</button>
+        <button className="hover:text-cyan-400 transition-colors border border-slate-800 px-4 py-1.5 rounded-full">Get in Touch</button>
+      </div>
+     
+    </div>
+  </footer>
+);
+
+
+```
