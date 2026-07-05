@@ -9,6 +9,7 @@
     <script src="https://unpkg.com" crossorigin></script>
     <script src="https://unpkg.com" crossorigin></script>
     <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { background-color: #020617; color: #f8fafc; margin: 0; font-family: sans-serif; }
     </style>
@@ -19,6 +20,26 @@
     <script type="text/babel" data-presets="react">
         // PASTE YOUR ENTIRE 900+ LINES OF APP.JSX DIRECTLY BELOW THIS LINE:
 // --- MAIN FULL-STACK APPLICATION COMPONENT ---
+// --- BROWSER LUCIDE ICON COMPONENT BRIDGE ---
+const lucideIcons = ['ShieldCheck', 'Cpu', 'Activity', 'Database', 'MessageSquare', 'Play', 'Settings', 'Menu', 'X', 'Lock', 'RefreshCcw', 'User', 'Zap', 'Droplet', 'CreditCard', 'Bitcoin', 'QrCode', 'Fingerprint', 'Search', 'Lightbulb', 'BookOpen', 'Printer', 'Network', 'TrendingUp', 'CheckCircle'];
+
+lucideIcons.forEach(iconName => {
+    window[iconName] = (props) => {
+        const ref = React.useRef(null);
+        React.useEffect(() => {
+            if (ref.current) {
+                ref.current.innerHTML = '';
+                const iconSpec = lucide.icons[iconName.charAt(0).toLowerCase() + iconName.slice(1)] || lucide.icons.helpCircle;
+                const svgEl = lucide.createIcons.createSvg(iconSpec, {
+                    ...props,
+                    class: props.className || ''
+                });
+                ref.current.appendChild(svgEl);
+            }
+        }, [props.className, props.color, props.size]);
+        return <span ref={ref} className="inline-flex items-center justify-center" />;
+    };
+});
 export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
